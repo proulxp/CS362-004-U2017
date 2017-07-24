@@ -47,7 +47,7 @@ void smithyRefactor(int currentPlayer, struct gameState *state, int i, int handP
 {
     //+5 Cards
     //*BUG INTRODUCED*
-    for (i = 0; i < 5; i++)
+    for (i = 0; i < 3; i++)
     {
         drawCard(currentPlayer, state);
     }

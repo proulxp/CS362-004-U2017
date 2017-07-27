@@ -89,6 +89,31 @@ randomtestcard1.out: randomtestcard1.c dominion.o rngs.o
 	gcc -o randomtestcard1 -g  randomtestcard1.c dominion.o rngs.o $(CFLAGS)
 	randomtestcard1 >> randomtestcard1.out
 	gcov -c -b dominion.c >> randomtestcard1.out
+	echo "" >> randomtestcard1.out
+	echo "dominion.c.gcov Output" >> randomtestcard1.out
+	cat dominion.c.gcov >> randomtestcard1.out
+
+randomtestcard2.out: randomtestcard2.c dominion.o rngs.o
+	echo "Result for running Dominion randomtestcard2:" > randomtestcard2.out
+	
+	echo "randomtestcard2.c:" >> randomtestcard2.out
+	gcc -o randomtestcard2 -g  randomtestcard2.c dominion.o rngs.o $(CFLAGS)
+	randomtestcard2 >> randomtestcard2.out
+	gcov -c -b dominion.c >> randomtestcard2.out
+	echo "" >> randomtestcard2.out
+	echo "dominion.c.gcov Output" >> randomtestcard2.out
+	cat dominion.c.gcov >> randomtestcard2.out
+
+randomtestadventurer.out: randomtestadventurer.c dominion.o rngs.o
+	echo "Result for running Dominion randomtestadventurer:" > randomtestadventurer.out
+	
+	echo "randomtestadventurer.c:" >> randomtestadventurer.out
+	gcc -o randomtestadventurer -g  randomtestadventurer.c dominion.o rngs.o $(CFLAGS)
+	randomtestadventurer >> randomtestadventurer.out
+	gcov -c -b dominion.c >> randomtestadventurer.out
+	echo "" >> randomtestadventurer.out
+	echo "dominion.c.gcov Output" >> randomtestadventurer.out
+	cat dominion.c.gcov >> randomtestadventurer.out
 	
 
 

@@ -72,6 +72,7 @@ int main () {
     G.discardCount[p] = floor(Random() * MAX_DECK);
     G.handCount[p] = floor(Random() * MAX_HAND);
     checkDrawCard(p, &G);
+      
   }
 
   printf ("ALL TESTS OK\n");

@@ -2,7 +2,7 @@
  
  ** Authors: Phillip Proulx
  
- ** Date: 07/22/2017
+ ** Date: 07/27/2017
  
  ** Description: Random tester for Smithy Card
  
@@ -20,7 +20,9 @@
 #include "rngs.h"
 #include <stdlib.h>
 #include <time.h>
+#include <math.h>
 
+//GLOBAL VARIABLE - Used to keep track of total failing tests during testing
 int failCount = 0;
 
 /*********************************************************************
@@ -44,54 +46,70 @@ void asserttrue(int param1, int param2)
 }
 
 
-int checkSmithyCard(int numPlayer, int testHandPos, struct gameState *afterState) {
+/*********************************************************************
+ 
+ ** Description: An oracle function called checkSmithyCard() this function
+ checks the execution of the smithy card using a set of random inputs
+ in the passed game state.
+ 
+ Referenced: checkDrawCard() in testDrawCard.c
+ 
+ *********************************************************************/
+int checkSmithyCard(int playerIndex, int testHandPos, struct gameState *afterState) {
     
+    //New game state for comparision
     struct gameState beforeState;
     
-    afterState->whoseTurn = numPlayer;
+    //Chooses current players tern based on fed player index
+    afterState->whoseTurn = playerIndex;
+    
+    //Randomly selects game states played card count
     afterState->playedCardCount = floor(Random() * MAX_HAND);
     
-    
+    //Copies before and after game state for comparison
     memcpy (&beforeState, afterState, sizeof(struct gameState));
     
-    int state;
-
+    //Call cardEffect on smithy card
+    cardEffect(smithy, 0, 0, 0, afterState, testHandPos, 0);
     
+    int index = 0;  //Index for 3 card draws
     
-    state = cardEffect(smithy, 0, 0, 0, afterState, testHandPos, 0);
-    
-    int index = 0;
-    int savedFinalCard = 0;
-
-    
+    //Loop to simulate drawing three cards on before state
     for(index = 0; index < 3; index++)
     {
-        if (beforeState.deckCount[numPlayer] > 0)
+        //If the card has cards in the deck
+        if (beforeState.deckCount[playerIndex] > 0)
         {
-            //Increase Hand Count by 3
-            beforeState.handCount[numPlayer]++;
+            //Increment hand count
+            beforeState.handCount[playerIndex]++;
             
-            beforeState.hand[numPlayer][beforeState.handCount[numPlayer]-1] = beforeState.deck[numPlayer][beforeState.deckCount[numPlayer]-1];
+            //Take top card from deck
+            beforeState.hand[playerIndex][beforeState.handCount[playerIndex]-1] = beforeState.deck[playerIndex][beforeState.deckCount[playerIndex]-1];
             
-            beforeState.deckCount[numPlayer]--;
+            //Decrement deck count
+            beforeState.deckCount[playerIndex]--;
             
         }
-        else if (beforeState.discardCount[numPlayer] > 0)
+        else if (beforeState.discardCount[playerIndex] > 0) //If the player has no cards in deck simulate discard draw
         {
-            memcpy(beforeState.deck[numPlayer], afterState->deck[numPlayer], sizeof(int) * beforeState.discardCount[numPlayer]);
-            memcpy(beforeState.discard[numPlayer], afterState->discard[numPlayer], sizeof(int)*beforeState.discardCount[numPlayer]);
+            //Copies over shuffled state from after state
+            memcpy(beforeState.deck[playerIndex], afterState->deck[playerIndex], sizeof(int) * beforeState.discardCount[playerIndex]);
+            memcpy(beforeState.discard[playerIndex], afterState->discard[playerIndex], sizeof(int)*beforeState.discardCount[playerIndex]);
+            
+            //Prevents bug from discard mechanic from not catching discard from hand position
             if(index == 2)
             {
-                beforeState.hand[numPlayer][beforeState.handCount[numPlayer]] = afterState->hand[numPlayer][testHandPos];
+                beforeState.hand[playerIndex][beforeState.handCount[playerIndex]] = afterState->hand[playerIndex][testHandPos];
             }
             else
             {
-               beforeState.hand[numPlayer][beforeState.handCount[numPlayer]] = afterState->hand[numPlayer][beforeState.handCount[numPlayer]];
+               beforeState.hand[playerIndex][beforeState.handCount[playerIndex]] = afterState->hand[playerIndex][beforeState.handCount[playerIndex]];
             }
             
-            beforeState.handCount[numPlayer]++;
-            beforeState.deckCount[numPlayer] = beforeState.discardCount[numPlayer]-1;
-            beforeState.discardCount[numPlayer] = 0;
+            //Updates hand count, deck count, and discard count
+            beforeState.handCount[playerIndex]++;
+            beforeState.deckCount[playerIndex] = beforeState.discardCount[playerIndex]-1;
+            beforeState.discardCount[playerIndex] = 0;
         }
         
 
@@ -99,33 +117,30 @@ int checkSmithyCard(int numPlayer, int testHandPos, struct gameState *afterState
     
 
     //Simulate Discard
-    beforeState.playedCards[beforeState.playedCardCount] = beforeState.hand[numPlayer][testHandPos];
+    beforeState.playedCards[beforeState.playedCardCount] = beforeState.hand[playerIndex][testHandPos];
     beforeState.playedCardCount++;
     
     //set played card to -1
-    beforeState.hand[numPlayer][testHandPos] = -1;
+    beforeState.hand[playerIndex][testHandPos] = -1;
     
     //remove card from player's hand
-    if ( testHandPos == (beforeState.handCount[numPlayer] - 1) ) 	//last card in hand array is played
+    if ( testHandPos == (beforeState.handCount[playerIndex] - 1) ) 	//last card in hand array is played
     {
         //reduce number of cards in hand
-        beforeState.handCount[numPlayer]--;
+        beforeState.handCount[playerIndex]--;
     }
     else
     {
 
         //replace discarded card with last card in hand
-        beforeState.hand[numPlayer][testHandPos] = beforeState.hand[numPlayer][ (beforeState.handCount[numPlayer] - 1)];
+        beforeState.hand[playerIndex][testHandPos] = beforeState.hand[playerIndex][ (beforeState.handCount[playerIndex] - 1)];
         //set last card to -1
-        beforeState.hand[numPlayer][beforeState.handCount[numPlayer] - 1] = -1;
+        beforeState.hand[playerIndex][beforeState.handCount[playerIndex] - 1] = -1;
         //reduce number of cards in hand
-        beforeState.handCount[numPlayer]--;
+        beforeState.handCount[playerIndex]--;
     }
     
-
-
-    
-    //asserttrue(state, 0);
+    //Compare memory size of before and after state
     asserttrue(memcmp(&beforeState, afterState, sizeof(struct gameState)), 0);
     
     return 0;
@@ -133,56 +148,80 @@ int checkSmithyCard(int numPlayer, int testHandPos, struct gameState *afterState
 
 int main () {
     
-    //Removed r, deckCount, discardCount, and handCount to silence warnings
-    int i;
-    int n;
-    int numPlayer;
-    int testHandPos;
-    int randomizer;
+
+    int index;  //Index for cycle game state generation
+    int numTests;   //Index for number of tests
+    int totalPlayers;   //Holds total number of players 2-4
+    int testHandPos;    //Random hand position chosen from total hand count.
+    int randomizer;     //Random integer from 0 500 to seed game.
+    int playerIndex;    //Random player index to test checkSmithyCard()
     
+    clock_t t1, t2;  //Initialize time variables
     
-    
+    //Seeds supply with chosen cards
     int k[10] = {adventurer, embargo, village, minion, mine, cutpurse,
         sea_hag, tribute, smithy, council_room};
     
     
     struct gameState GS;
     
-    printf ("Testing drawCard.\n");
-    
-    printf ("RANDOM TESTS.\n");
-    
+    printf ("TESTING SMITHY CARD.\n");
+
+    //Based off of testDrawCard.c
     SelectStream(2);
     PutSeed(3);
     
-    for (n = 0; n < 200000; n++) {
-        for (i = 0; i < sizeof(struct gameState); i++) {
-            ((char*)&GS)[i] = floor(Random() * 256);
+    t1 = clock();
+    
+    //Cycles through test cases
+    for (numTests = 0; numTests < 2000; numTests++) {
+        for (index = 0; index < sizeof(struct gameState); index++) {
+            ((char*)&GS)[index] = floor(Random() * 256);
         }
         
-        numPlayer = floor(Random() * 4);
+        //Random total player count from 2 to 4
+        totalPlayers = floor(Random() * 3) + 2;
         
+        //Random int from 0 to 500
         randomizer = floor(Random() * 500);
         
-        initializeGame(numPlayer, k, randomizer, &GS);
+        //Sets up game state
+        initializeGame(totalPlayers, k, randomizer, &GS);
         
+        //Choose random player index based on total players
+        playerIndex = floor(Random() * totalPlayers);
         
-        GS.deckCount[numPlayer] = floor(Random() * MAX_DECK);
-        GS.discardCount[numPlayer] = floor(Random() * MAX_DECK);
-        GS.handCount[numPlayer] = floor(Random() * MAX_HAND);
-        
-        //GS.deckCount[numPlayer] = 2;
+        GS.deckCount[playerIndex] = floor(Random() * MAX_DECK);     //Random deck Count
+        GS.discardCount[playerIndex] = floor(Random() * MAX_DECK);  //Random discard Count
+        GS.handCount[playerIndex] = floor(Random() * MAX_HAND);     //Random hand Count
+    
         
         //Sets passed handposition to a random position in players current hand
-        testHandPos = floor(Random() * GS.handCount[numPlayer]);
+        testHandPos = floor(Random() * GS.handCount[playerIndex]);
         
-        printf("Testing Player: %d, DeckCount: %d, DiscardCount: %d, HandCount: %d\n", numPlayer, GS.deckCount[numPlayer], GS.discardCount[numPlayer], GS.handCount[numPlayer]);
+        printf("Testing Player Index: %d, DeckCount: %d, DiscardCount: %d, HandCount: %d\n", playerIndex, GS.deckCount[playerIndex], GS.discardCount[playerIndex], GS.handCount[playerIndex]);
         
-        checkSmithyCard(numPlayer, testHandPos, &GS);
+        checkSmithyCard(playerIndex, testHandPos, &GS);
     }
     
-    printf ("ALL TESTS OK\n");
+    t2 = clock();
+    
+    
+    //Output statements to the user.
+    if(failCount == 0)
+    {
+      printf ("ALL TESTS PASSED\n");
+    }
+    else
+    {
+      printf ("THERE WERE FAILURES\n");
+    }
+    
     printf("Number of Failures: %d\n", failCount);
+    
+    //Referenced: https://stackoverflow.com/questions/1083142/what-s-the-correct-way-to-use-printf-to-print-a-clock-t
+    printf("The random tester ran in (sec): %Lf\n", ((long double)(t2 - t1))/CLOCKS_PER_SEC);
+
     
     exit(0);
     

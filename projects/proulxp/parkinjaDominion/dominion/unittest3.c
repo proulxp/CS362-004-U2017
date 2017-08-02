@@ -67,8 +67,6 @@ int main() {
     memcpy(&testGS, &GS, sizeof(struct gameState));
     
     testGS.handCount[0] = 10;
-    testGS.discardCount[0] = 0; //Added in Assignment 5
-    testGS.deckCount[0] = 0;    //Added in Assignment 5
     testGS.hand[0][0] = curse;
     testGS.hand[0][1] = curse;
     testGS.hand[0][2] = estate;
@@ -176,8 +174,6 @@ int main() {
     memcpy(&testGS, &GS, sizeof(struct gameState));
     
     testGS.handCount[0] = 5;
-    testGS.discardCount[0] = 0; //Added in Assignment 5
-    testGS.deckCount[0] = 0;    //Added in Assignment 5
     testGS.hand[0][0] = copper;
     testGS.hand[0][1] = copper;
     testGS.hand[0][2] = copper;
@@ -202,8 +198,6 @@ int main() {
     memcpy(&testGS, &GS, sizeof(struct gameState));
     
     testGS.handCount[0] = 5;
-    testGS.discardCount[0] = 0; //Added in Assignment 5
-    testGS.deckCount[0] = 0;    //Added in Assignment 5
     testGS.hand[0][0] = curse;
     testGS.hand[0][1] = curse;
     testGS.hand[0][2] = curse;

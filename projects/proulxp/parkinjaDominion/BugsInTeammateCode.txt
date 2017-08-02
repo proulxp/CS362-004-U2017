@@ -1,0 +1,199 @@
+Authors: Phillip Proulx
+
+Date: 07/31/2017
+
+Assignment: Assignment 5
+
+File Summary: The following text file contains three individual bug reports generated while running my unit tests and random testers on my teammates dominion code. My teammate is Jared Parkinson (ONID: parkinja).
+
+The bug reports are based roughly on the teamplate provided here: http://noverse.com/blog/2012/06/how-to-write-a-good-bug-report/
+
+*BUG REPORT 1*
+
+Title: Adventurer Card Bug - Broken Draw Mechanic (Bug 1)
+Product: parkinja dominion.c code (Version: Master Branch downloaded 07/31/2017)
+Classification: Minor Bug - This bug does not cause a crash but does modify the gameplay mechanics of the dominion Adventurer card code.
+Platform: The testing of this code was performed on the school flip servers. 
+Can it be reproduced?: Every-time
+Description 
+	- Summary: This bug first presented itself through the usage of my randomtestadventurer.c tester. I started with this random tester because of its 100% coverage of the adventurer code. This tester returned a failed teste oracle for each of the 4000 random inputs from this tester. This clearly indicated that there was a issue with the adventurer implementation. I next checked this again using the cardtest1.c unit test which tests specifically the adventurer card with 5 sub unit tests.
+	- What happened: I ran my random tester for the adventurer card and received 4000 failed results. Every single random input caused the oracle to fail. I then ran my adventurer unit tester which failed 3 out of the 5 specific sub tests. The tests that failed were test 1, test 4, and test 5. The descriptions for the three failed sub-tests from assignment 3 explanation are the following:
+		Test 1 – This test is designed to check the basic functionality of the Adventurer card which is to see if only 2 treasure cards are pulled. There is a set of known value cards in the player’s hand and a set of known treasure cards of all the same type in the deck. The hand should only have 2 of those known treasure cards added to the hand after initiating the FUT.
+		
+		Test 4 – The FUT should have a functioning mechanic where if the deck runs out of cards then the discard pile is then shuffled and placed into the deck for drawing. This was tested by having a set value of 0 for the deck and a known set of cards in the discard. After initiating the FUT the deck is checked for the original set of card in the discard.
+		
+		Test 5 – This test checks to make sure that all drawn cards that are non-treasure cards along with the played adventurer cards are removed from the player’s hand after the FUT is used. There is a known set of cards in the player’s hand prior to test, this set is checked after the FUT to see that it only contains treasure and the original cards without the adventurer card present.
+	- What’s the error: Here are the error messages returned from my testers:
+			
+			From Random Tester:
+
+			THERE WERE FAILURES
+			Number of Failures: 4000
+			The random tester ran in (sec): 4.210000
+
+			From Unit Tests:
+
+				----------------- Testing Function (Adventurer Card) ----------------
+			TEST 1 - Adventurer stops drawing after 2 treasure cards are pulled
+			The players hand has 5 cards and all are adventurer.
+			The players deck has 5 cards and they are all silver cards.
+			The players hand should only have 2 silver cards.
+			Actual Value: 1
+			TEST FAILED
+
+			TEST 4 - Adventurer should take discard and place into deck if deck is empty.
+			The players hand has 5 cards and all are adventurer.
+			The players deck is empty and the players discard pile has 5 gold cards.
+			The players deck should have 3 cards and all are gold cards.
+			TEST FAILED
+
+			TEST 5 - Adventurer should take all non-treasure cards pulled and place into discard.
+			The players hand has 5 cards and all are adventurer.
+			The discard pile is empty to start.
+			The players deck has 6 cards the top 3 are smithy, the next 2 are gold cards, and the last card is a smithy.
+			The players hand should only have 7 cards and the last two should be gold cards.
+			The discard pile should only have 4 cards and those 4 cards are 3 smithy and the adventurer.
+			TEST FAILED
+
+Steps to reproduce: I can reproduce these failures every time I run my random tester and then run my unit tester.
+
+Cause of the bug: I used the failed random tester results as the primary symptom that there was an issue with my teammates adventurer card. It seemed there must be an inherent issue with the implementation of this card because all 4000 random test results returned a failure. From this, I tested this card with my unit tests to see if I could create more specific symptoms of the problem. From this testing, I received 3 specific failures. A failure of test 1 points to the cause of the bug being in the draw mechanic, a failure of test 4 points to the cause being either in the draw mechanic and/or the discard mechanic of this card, and lastly a failure of test 5 also points to the cause being either in the draw mechanic and/or the discard mechanic of this card. From this, I did some simple code inspection to find the inserted bug. The draw mechanic was the cause of the problem by having the drawntreasure variable equal to 1 instead of equalling zero. This caused the adventurer card to only draw one treasure card instead of the correct 2 treasure cards.
+
+Section of code with bug from dominion.c:
+
+//Needs drawntreasure, state, *not needed can get*currentPlayer, cardDrawn, z, temphand[MAX_HAND], drawntreasure
+int Adventurer_Efct(struct gameState *state) {  
+  //Needed vars
+  //BUG: drawntreasure offset by 1
+  //Effect: You only draw 1 treasure now  
+  int drawntreasure = 1;
+  int temphand[MAX_HAND];
+  int z = 0; //this is the counter for the temp hand
+  int cardDrawn = 0;
+  //Get the current player
+  //printf("currentPlayer\n"); //DEBUG
+  int currentPlayer = whoseTurn(state);
+
+  //Original Code------------------------
+  while(drawntreasure<2){
+
+
+*BUG REPORT 2*
+
+Title: Smithy Card Bug - Broken Draw Mechanic (Bug 2)
+Product: parkinja dominion.c code (Version: Master Branch downloaded 07/31/2017)
+Classification: This bug does not cause a crash but does modify the gameplay mechanics of the dominion Smithy card code.
+Platform: The testing of this code was performed on the school flip servers.
+Can it be reproduced?: Every-time
+Description 
+	- Summary: This bug first presented itself through the usage of my randomtestcard1.c tester. I started with this random tester because of its 100% coverage of the smithy code. This tester returned a failed teste oracle for each of the 2000 random inputs from this tester. This clearly indicated that there was a issue with the smithy implementation. I next checked this again using the cardtest2.c unit test which tests specifically the smithy card with 6 sub unit tests.
+	- What happened: I ran my random tester for the smithy card and received 2000 failed results. Every single random input caused the oracle to fail. I then ran my smithy unit tester which failed 2 out of the 6 specific sub tests. The tests that failed were test 1 and test 4. The descriptions for the two failed sub-tests from assignment 3 explanation are the following:
+
+		Test 1 – This test checks the drawing mechanic from the smithy cards and to see if only 3 cards are drawn. The test works by giving a known set of cards and known number of cards before enacting the FUT. The hand count is then compared to the expected hand count to see if this value matched the expected value.
+
+		Test 4 – This test is designed to check the drawing mechanic from the smithy card to see if the cards gained come from the players own deck. The deck was given a set of known cards and those cards were checked to see if they were present in the player’s hand after playing the FUT.
+
+	- What’s the error: Here are the error messages returned from my testers:
+
+			From Random Tester:
+
+			THERE WERE FAILURES
+			Number of Failures: 2000
+			The random tester ran in (sec): 1.790000
+
+			From Unit Tests:
+
+			----------------- Testing Function (Smithy Card) ----------------
+			TEST 1 - Smithy draws exactly 3 cards.
+			The players hand has 5 cards and all are smithy.
+			The players deck has 6 cards and they are all silver cards.
+			The players hand should only have 7 cards after played.
+			Actual Value: 6
+			TEST FAILED
+
+			TEST 4 - Smithy removes cards from own deck.
+			The players hand has 5 cards and all are smithy.
+			The players deck has 6 cards and all are silver cards.
+			The players deck should only have 3 silver card remaining.
+			Actual Value: 4
+			TEST FAILED
+
+Steps to reproduce: I can reproduce these failures every time I run my random tester and then run my unit tester.
+
+Cause of the bug: I used the failed random tester results as the primary symptom that there was an issue with my teammates smithy card. It seemed there must be an inherent issue with the implementation of this card because all 2000 random test results returned a failure. From this, I tested this card with my unit tests to see if I could create more specific symptoms of the problem. From this testing, I received 2 specific failures. A failure of test 1 and of test 4 points to the cause of the bug being in the draw mechanic. From this, I did some simple code inspection to find the inserted bug. The draw mechanic was the cause of the problem by having the for-loop that draws cards from the deck only cycle 2 times instead of the proper 3 times for this card. This caused the smithy card to only draw 2 cards instead of 3 thus causing the failures in my random tester and in my two sub unit tests.
+
+Section of code with bug from dominion.c:
+
+//Needs currentPlayer, state, handPos
+int Smithy_Efct(struct gameState *state, int handPos) {
+  //Get the current player
+  int currentPlayer = whoseTurn(state);
+  int i=0;
+
+  //Original Code------------------------
+  //+3 Cards
+  //BUG: NO CARDS DRAWN ( i < 3 is the original)
+  //BUG: UPDATED 2 CARDS DRAWN ( i < 2)
+  for (i = 0; i < 2; i++) { //BUG: Was i<3, now i<2
+    drawCard(currentPlayer, state);
+  }
+  //discard card from hand
+  discardCard(handPos, currentPlayer, state, 0);
+  return 0;
+}
+
+*BUG REPORT 3*
+
+Title: Village Card Bug - Broken Action Mechanic (Bug 2)
+Product: parkinja dominion.c code (Version: Master Branch downloaded 07/31/2017)
+Classification: This bug does not cause a crash but does modify the gameplay mechanics of the dominion Village card code.
+Platform: The testing of this code was performed on the school flip servers.
+Can it be reproduced?: Every-time
+Description 
+	- Summary: This bug first presented itself through the usage of my randomtestcard2.c tester. I started with this random tester because of its 100% coverage of the village code. This tester returned a failed teste oracle for each of the 2000 random inputs from this tester. This clearly indicated that there was an issue with the village implementation. I next checked this again using the cardtest4.c unit test which tests specifically the village card with 5 sub unit tests.
+	- What happened: I ran my random tester for the village card and received 2000 failed results. Every single random input caused the oracle to fail. I then ran my village unit tester which failed 1 out of the 5 specific sub tests. The tests that failed was test 3. The descriptions for the failed sub-test from assignment 3 explanation is the following:
+
+		Test 3 – This test checks to see if the village card’s action gain mechanic properly works. The number of action points prior to playing the FUT was saved prior to using the function. This was checked after playing the FUT to see if the necessary change occurred.
+
+	- What’s the error: Here are the error messages returned from my testers:
+
+			From Random Tester: 
+
+			THERE WERE FAILURES
+			Number of Failures: 2000
+			The random tester ran in (sec): 1.760000				
+
+			From Unit Tests:
+			----------------- Testing Function (Village Card) ----------------
+			TEST 3 - Village properly adds +2 action points.
+			The players hand has 5 cards, all are village cards.
+			The player starts with 1 action point.
+			After playing the village card the user should have 2 actions points remaining.
+			Actual Value: 201
+			TEST FAILED
+
+Steps to reproduce: I can reproduce these failures every time I run my random tester and then run my unit tester.
+
+Cause of the bug: I used the failed random tester results as the primary symptom that there was an issue with my teammates village card. It seemed there must be an inherent issue with the implementation of this card because all 2000 random test results returned a failure. From this, I tested this card with my unit tests to see if I could create more specific symptoms of the problem. From this testing, I received 1 specific failure. A failure of test 3 points to the cause of the bug being in the action point mechanic. From this, I did some simple code inspection to find the inserted bug. The bug in this card is produced by increasing the player's action points by 200 instead of the correct plus 2 action points. Because of this difference in action points, this caused the 2000 failures in my random tester along with the specific failure of test 3 in my unit tests.
+
+Section of code with bug from dominion.c:
+
+//Needs state, currentPlayer
+int Village_Efct(struct gameState *state, int handPos) {
+  //Get the current player  
+  int currentPlayer = whoseTurn(state);
+
+  //Original Code------------------------
+  //+1 Card
+  drawCard(currentPlayer, state);
+  //BUG: +200 actions rather than +2
+  //Effect: Allows player to take more actions
+  //+2 Actions
+  state->numActions = state->numActions + 200;
+  //discard played card from hand
+  discardCard(handPos, currentPlayer, state, 0);
+  return 0;
+}
+
+
+

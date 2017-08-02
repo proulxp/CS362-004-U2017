@@ -542,6 +542,8 @@ int isGameOver(struct gameState *state) {
 int scoreFor (int player, struct gameState *state) {
 
   int i;
+  //Added the following line to fix the Gardens Bug for Assignment 5
+  int totalCardCount = state->deckCount[player] + state->handCount[player] + state->discardCount[player];
   int score = 0;
   //score from hand
   for (i = 0; i < state->handCount[player]; i++)
@@ -551,7 +553,7 @@ int scoreFor (int player, struct gameState *state) {
       if (state->hand[player][i] == duchy) { score = score + 3; };
       if (state->hand[player][i] == province) { score = score + 6; };
       if (state->hand[player][i] == great_hall) { score = score + 1; };
-      if (state->hand[player][i] == gardens) { score = score + ( fullDeckCount(player, 0, state) / 10 ); };
+      if (state->hand[player][i] == gardens) { score = score + ( totalCardCount/10 ); }; //Fixed the Gardens score count
     }
 
   //score from discard
@@ -562,18 +564,19 @@ int scoreFor (int player, struct gameState *state) {
       if (state->discard[player][i] == duchy) { score = score + 3; };
       if (state->discard[player][i] == province) { score = score + 6; };
       if (state->discard[player][i] == great_hall) { score = score + 1; };
-      if (state->discard[player][i] == gardens) { score = score + ( fullDeckCount(player, 0, state) / 10 ); };
+      if (state->discard[player][i] == gardens) { score = score + ( totalCardCount/10  ); }; //Fixed the Gardens score count
     }
 
   //score from deck
-  for (i = 0; i < state->discardCount[player]; i++)
+  //Fixed this for-loop by making it bounded by deckCount instead of discardCount (Assignment-5)
+  for (i = 0; i < state->deckCount[player]; i++)
     {
       if (state->deck[player][i] == curse) { score = score - 1; };
       if (state->deck[player][i] == estate) { score = score + 1; };
       if (state->deck[player][i] == duchy) { score = score + 3; };
       if (state->deck[player][i] == province) { score = score + 6; };
       if (state->deck[player][i] == great_hall) { score = score + 1; };
-      if (state->deck[player][i] == gardens) { score = score + ( fullDeckCount(player, 0, state) / 10 ); };
+      if (state->deck[player][i] == gardens) { score = score + ( totalCardCount/10  ); }; //Fixed the Gardens score count
     }
 
   return score;
